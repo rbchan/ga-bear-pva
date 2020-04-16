@@ -1,0 +1,208 @@
+model{
+
+# Prior for baseline cap prob
+behave ~ dbeta(1,1) ## Trap happy effect
+
+for(t in 1:nYears) {
+  p0year[t] ~ dbeta(1,1)
+  for(k in 1:nWeeks) {
+  p0[k,t,2] <- p0year[t]
+  p0[k,t,1] <- p0[k,t,2]*behave
+  }
+}
+
+# Prior for scale parameter
+sigma ~ dgamma(0.01, 0.01)
+
+# Prior for data aug parameter
+psi[1] ~ dbeta(1,1) 
+
+## Constant survival
+phi ~ dbeta(1,1)
+
+## Maximum per-capita recruitment (when N is 0)
+igamma0 ~ dunif(0, 1) 
+gamma1 ~ dunif(0,5) ## Only allow for negative DD (on biological grounds)
+
+EN[1] <- M*psi[1] # Expected value of abundance in year 1
+for(t in 2:(nYears+nFuture)) {
+  gamma[t-1] <- igamma0*exp(-gamma1*N[t-1]^2)
+  ER[t] <- N[t-1]*gamma[t-1]   # Expected number of recruits in year t
+  psi[t] <- ER[t]/sum(a[,t-1]) # probability of being recruited
+  EN[t] <- N[t-1]*phi + ER[t]
+}
+
+# Model for the state process:
+#    Location and alive-dead state of each bear
+for(i in 1:M) { # loop over bears
+  # s[i,1:2] is the location of bear i's activity center
+  s[i,1,1] ~ dunif(xlim[1], xlim[2]) # x-coord
+  s[i,2,1] ~ dunif(ylim[1], ylim[2]) # y-coord
+  # Ones trick to restrict individuals to
+  # the polygon defining the state-space
+  ones[i,1] ~ dbern(S[round((ylim[2]-s[i,2,1])/delta+0.5),
+                      round((s[i,1,1]-xlim[1])/delta+0.5)])
+  # Model for the alive-dead state of each bear
+  z[i,1] ~ dbern(psi[1]) # Was bear i alive in yr1?
+  a[i,1] <- 1-z[i,1]     # Available to be recruited?
+  for(t in 2:(nYears+nFuture)) {
+    # No dispersal 
+    s[i,1,t] <- s[i,1,t-1] 
+    s[i,2,t] <- s[i,2,t-1] 
+    # Model for the alive-dead state of each bear
+    Ez[i,t] <- z[i,t-1]*phi + a[i,t-1]*psi[t]
+    z[i,t] ~ dbern(Ez[i,t])
+    a[i,t] <- a[i,t-1]*(1-z[i,t])
+  }
+  everAlive[i] <- max(z[i,])
+}
+
+
+## Observed data
+for(i in 1:nBears) {
+  for(t in 1:nYears) {
+    # avoid looping over traps that weren't operational
+    for(j in oper.traps[1:nTrapsYr[t],t]) { 
+      # Distance matrix 
+      d[i,j,t] <- sqrt((s[i,1,t]-x[j,1])^2 +
+                       (s[i,2,t]-x[j,2])^2)
+      for(k in 1:nWeeks) { # loop over occasions
+        # Expected value of y (a probability)
+        Ey[i,j,k,t] <- p0[k,t,prevcap[i,j,k,t]]*exp(-d[i,j,t]^2/(2*sigma^2))*z[i,t]
+        y[i,j,k,t] ~ dbern(Ey[i,j,k,t])
+      }
+    }
+  }
+}
+
+
+## Augmented data
+for(i in (nBears+1):M) {
+  for(t in 1:nYears) {
+    for(j in oper.traps[1:nTrapsYr[t],t]) {
+      d[i,j,t] <- sqrt((s[i,1,t]-x[j,1])^2 +
+                       (s[i,2,t]-x[j,2])^2)
+      for(k in 1:nWeeks) { # loop over occasions
+        ## All augmented bears have prevcap equal 1 (not yet captured)
+        Ey[i,j,k,t] <- p0[k,t,1]*exp(-d[i,j,t]^2/(2*sigma^2))*z[i,t]
+	}
+      prNoDetWeek[i,j,t] <- prod(1-Ey[i,j,,t])
+    }
+    ## Probability of capturing a bear at least once
+    prDet[i,t] <- 1-prod(prNoDetWeek[i,oper.traps[1:nTrapsYr[t],t],t]) 
+    y.zero[i,t] ~ dbern(prDet[i,t]) 
+  }
+}
+
+
+## Derived parameters
+Ntotal <- sum(everAlive)
+for(t in 1:(nYears+nFuture)) {
+  N[t] <- sum(z[,t]) # Annual abundance
+}
+
+for(t in 2:(nYears+nFuture)) {
+  survivors[t-1] <- z[,t-1] %*% z[,t]
+  recruits[t-1] <- (1-z[,t-1]) %*% z[,t]
+  lambda[t-1] <- N[t]/max(N[t-1],.1)
+}
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ## Observed data
+# for(i in 1:nBears) {
+#     # Yr 1 (JAGS doesn't seem like this in a for loop
+#     for(j in oper.traps[1:nTraps[1],1]) {
+#       Ey1[i,j] <- z[i,1]*p[i,j]
+#       for(k in 1:nWeeks) { # loop over occasions
+#         y[i,j,k,1] ~ dbern(Ey1[i,j])
+#       }
+#     }
+#     # Yr 2 
+#     for(j in oper.traps[1:nTraps[2],2]) {
+#       Ey2[i,j] <- z[i,2]*p[i,j]
+#       for(k in 1:nWeeks) { # loop over occasions
+#         y[i,j,k,2] ~ dbern(Ey2[i,j])
+#       }
+#     }
+#     # Yr 3 
+#     for(j in oper.traps[1:nTraps[3],3]) {
+#       Ey3[i,j] <- z[i,3]*p[i,j]
+#       for(k in 1:nWeeks) { # loop over occasions
+#         y[i,j,k,3] ~ dbern(Ey3[i,j])
+#       }
+#     }
+#     # Yr 4 
+#     for(j in oper.traps[1:nTraps[4],4]) {
+#       Ey4[i,j] <- z[i,4]*p[i,j]
+#       for(k in 1:nWeeks) { # loop over occasions
+#         y[i,j,k,4] ~ dbern(Ey4[i,j])
+#       }
+#     }
+#     # Yr 5 (JAGS doesn't seem like this in a for loop
+#     for(j in oper.traps[1:nTraps[5],5]) {
+#       Ey1[i,j] <- z[i,1]*p[i,j]
+#       for(k in 1:nWeeks) { # loop over occasions
+#         y[i,j,k,1] ~ dbern(Ey1[i,j])
+#       }
+#     }
+#   }
+# }
+
+
+
+
+# ## Observed data
+# for(i in 1:nBears) {
+#   for(t in 1:nYears) {
+#     for(j in 1:nTraps) { # loop over traps
+# #    for(j in oper.traps[1:nTraps[t],t]) {
+#       # Expected value of y (a probability)
+#       Ey[i,j,t] <- z[i,t]*p[i,j]*oper[j,t]
+#       for(k in 1:nWeeks) { # loop over occasions
+#         y[i,j,k,t] ~ dbern(Ey[i,j,t])
+#       }
+#     }
+#   }
+# }
+
+
+# ## Augmented data
+# for(i in (nBears+1):M) {
+#   for(t in 1:nYears) {
+#     for(j in 1:nTraps) { # loop over traps
+# #    for(j in oper.traps[1:nTraps[t],t]) {
+#       # Expected value of y (a probability)
+#       Ey[i,j,t] <- z[i,t]*p[i,j]*oper[j,t]
+#       prNoDetWeek[i,j,t] <- (1-Ey[i,j,t])^nWeeks
+#     }
+#     prNoDet[i,t] <- 1-prod(prNoDetWeek[i,1:nTraps,t]) 
+#     y.zero[i,t] ~ dbern(prNoDet[i,t])
+#   }
+# }
+
