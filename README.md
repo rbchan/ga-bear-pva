@@ -1,5 +1,5 @@
 # ga-bear-pva
-Data and code for Central Georgia black bear population viability analysis (PVA). The PVA involved forecasting with a female-based population model fit to spatial capture-recapture data. No data on males is included in this repository.
+Data and code for Central Georgia black bear population viability analysis (PVA). The PVA involved forecasting with a female-based population model fit to spatial capture-recapture data.
 
 
 ## File descriptions
@@ -43,3 +43,8 @@ Data and code for Central Georgia black bear population viability analysis (PVA)
 
 - The most supported model. 
 
+
+
+## DOI
+
+[![DOI](https://zenodo.org/badge/233102309.svg)](https://zenodo.org/badge/latestdoi/233102309)
