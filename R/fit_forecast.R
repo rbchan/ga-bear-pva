@@ -39,7 +39,8 @@ y.nonsp.robust <- apply(y>0, c(1,3,4), any)*1L
 str(y.nonsp.robust)
 
 ## Non-spatial, non-robust format
-y.nonsp.nonrobust <- apply(y.nonsp.robust>0, c(1,3), any)*1L
+y.nonsp.nonrobust <- apply(y.nonsp.robust>0,
+                           c(1,3), any)*1L
 str(y.nonsp.nonrobust)
 
 ## Spatial, non-robust format
@@ -129,11 +130,6 @@ levelplot(habitat ~ x+y, S360dat, aspect='iso',
               lpoints(traps, pch=3)
           })
 
-levelplot(S360+pixIn+habitat ~ x+y, S360dat, aspect='iso',
-          panel=function(...) {
-              panel.levelplot(...)
-              lpoints(traps, pch=3)
-          })
 
 delta <- res(S360)[1]
 xseq <- sort(unique(S360dat$x))
@@ -240,8 +236,10 @@ library(parallel)
 
 cl1 <- makeCluster(4)
 
-clusterExport(cl1, c("jd", "ji", "jp"
+clusterExport(cl1, c("jd", "ji", "jp",
+                     "traps.in", "first.det", "last.det"))
 
+## Compile and adapt
 jm.out <- clusterEvalQ(cl1, {
     library(rjags)
     load.module("dic")
@@ -253,21 +251,24 @@ jm.out <- clusterEvalQ(cl1, {
 })
 
 
-save(jm.out, file="jm21.gzip")
+save(jm.out, file="jm.gzip")
 
 
+## Draw posterior samples, but don't monitor latent variables
+system.time({
+    jc1.out <- clusterEvalQ(cl1, {
+        jc1 <- coda.samples(model=jm,
+                            variable.names=c(jp, "deviance"),
+                            n.iter=6500)
+        return(as.mcmc(jc1))
+    })
+}) ## 450 iterations/hr
 
-jc1.out <- clusterEvalQ(cl1, {
-    jc1 <- coda.samples(model=jm,
-                        variable.names=c(jp, "deviance"),
-                        n.iter=1500)
-    return(as.mcmc(jc1))
-})
 
+save(jc1.out, file="jc1.gzip")
 
-save(jc1.out, file="jc1-out21.gzip")
-
-
+## Draw some more samples, including the latent varialbes needed
+## for forecasting
 jc2.out <- clusterEvalQ(cl1, {
     jc2 <- coda.samples(model=jm,
                         variable.names=c(jp, "deviance", "z", "a","s"),
@@ -277,7 +278,7 @@ jc2.out <- clusterEvalQ(cl1, {
 
 
 
-save(jc2.out, file="jc2-out21.gzip")
+save(jc2.out, file="jc2.gzip")
 
 rm(jc1.out, jc2.out)
 gc()
@@ -287,7 +288,7 @@ gc()
 js3.out <- clusterEvalQ(cl1, {
     js3 <- jags.samples(model=jm,
                         variable.names=c("deviance","WAIC"),
-                        n.iter=1000, n.thin=1, type="mean")
+                        n.iter=5000, n.thin=1, type="mean")
     return(js3)
 })
 
@@ -339,7 +340,7 @@ state.out <- clusterEvalQ(cl1, {
 })
 
 
-save(state.out, file="jm-state21.gzip")
+save(state.out, file="jm-state.gzip")
 
 
 
