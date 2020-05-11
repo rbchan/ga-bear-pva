@@ -1,4 +1,5 @@
 figs/detmaps/
+*.RData
 *.gzip
 *.aux
 *.log

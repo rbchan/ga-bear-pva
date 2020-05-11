@@ -22,9 +22,14 @@ Data and code for Central Georgia black bear population viability analysis (PVA)
 - Compute summary statistics and create maps of the detection locations, referenced by year, for each bear.
 
 
-#### [R/fit_forecast.R](R/forecast_fn.R)
+#### [R/fit.R](R/forecast_fn.R)
 
-- Fit the model and forecast from it. Depends on the `forecasting` function in [R/forecast_fn.R](R/forecast_fn.R)
+- Fit the model with the lowest WAIC score.
+
+
+#### [R/forecast.R](R/forecast_fn.R)
+
+- Forecast with the fitted model. Depends on the `forecast` function in [R/forecast_fn.R](R/forecast_fn.R)
 
 
 #### [R/forecast_fn.R](R/forecast_fn.R)
