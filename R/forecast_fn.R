@@ -1,3 +1,8 @@
+## Function to forecast population dynamics using posterior samples
+## from model in the "fit.R" script. 
+## There is no individual heterogeneity in vital rates
+## or harvest susceptibility, but the framework could be extended to
+## accommodate these sources of varaition.
 forecast <- function(mcout,            ## object of class mcmc or mcmc.list
                      nFuture,          ## Future years
                      M,                ## Can be different than M in model
@@ -59,7 +64,7 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
         sig.lphi <- mcmat[,"sig.lphi"]
     }
     if(storeZ) {
-        ## Could save a lot of memory by writing over z and a in each iter
+        ## Save memory by writing over z and a in each iter
         z.out <- array(0L, c(M, nYears, nIter))
         a.out <- array(1L, c(M, nYears, nIter))
     }
@@ -86,14 +91,14 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
         ## For all variables other than Nbar, only last value in the q loop
         ## will be stored and returned
         for(q in 1:NbarSims) {
-        Nbar[1,q,iter] <- sum(z[,1]) ##N[1,iter]
+        Nbar[1,q,iter] <- sum(z[,1]) 
         if(stochastic) {
             harvest <- rpois(nYears, meanHarvest)
         }
         for(t in 2:nYears) {
             NafterHarvest <- max(Nbar[t-1,q,iter]-harvest[t],0)
             if(season=="prerepro") {
-                Nrepro <- NafterHarvest ##max(Nbar[t-1,q,iter]-harvest[t],0)
+                Nrepro <- NafterHarvest 
             } else {
                 Nrepro <- Nbar[t-1,q,iter]
             }
@@ -105,8 +110,7 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
                                            maxRecruit)
                 } else if(rmod=="gaus") {
                     gamma[t-1,iter] <- igamma0[iter]*exp(-gamma1[iter]*Nrepro^2)
-                } else
-                    stop("huh?")
+                } 
             } else {
                 gamma[t-1,iter] <- exp(rnorm(1, mu.lgamma[iter],
                                              sqrt(sig.lgamma[iter])))
@@ -142,13 +146,13 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
                                     prob=z[,t-1]/Nbar[t-1,q,iter])
                 not.harvested[harvested] <- 0
             } else if(season=="prerepro") {
-                warning("This hasn't been implemented yet")
+                warning("season='prerepro' hasn't been implemented")
             }
             Ez <- z[,t-1]*phi[t-1,iter]*not.harvested +
                 a[,t-1]*psi
             z[,t] <- rbinom(M, 1, Ez)
             a[,t] <- a[,t-1]*(1-z[,t])
-            Nbar[t,q,iter] <- sum(z[,t]) ##N[t,iter]
+            Nbar[t,q,iter] <- sum(z[,t]) 
         }
         }
         if(storeZ) {

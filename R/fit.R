@@ -1,3 +1,4 @@
+## Fit open population SCR models to central GA black bear data
 ## Female-only analysis
 
 library(rjags)
@@ -204,6 +205,8 @@ ji <- function() {
     }
     p0i <- array(NA, c(nWeeks, nYears, 2))
     p0i[,,2] <- matrix(runif(nWeeks*nYears), nWeeks, nYears)
+    ## Could add list components '.RNG.name' and '.RNG.seed' to
+    ## make this reproducible. 
     list(z=zi, s=si, s.rec=si.rec, p0=p0i,
          sigma=runif(1, 3000, 4000), behave=runif(1),
          mu.lphi=0, sig.lphi=.01,
@@ -368,11 +371,14 @@ ls()
 library(coda)
 
 
-load("jc1.gzip")
-jc1 <- as.mcmc.list(jc1.out)
+## load("jc1.gzip")
+## jc1 <- as.mcmc.list(jc1.out)
 
-load("jc2.gzip")
-jc2 <- as.mcmc.list(jc2.out)
+## load("jc2.gzip")
+## jc2 <- as.mcmc.list(jc2.out)
+
+load("jc4.gzip")
+jc4 <- as.mcmc.list(jc4.out)
 
 
 
@@ -390,7 +396,7 @@ vn.sub <- c(vn[-c(grep("p0", vn), grep("z\\[", vn),
 
 ##vn21sub <- vn21sub[-grep("deviance", vn21sub)]
 
-mc.sub <- as.data.frame(as.matrix(jc2[,vn.sub]))
+mc.sub <- as.data.frame(as.matrix(jc4[,vn.sub]))
 summary(mc.sub)
 
 ## Area of the state-space
@@ -465,7 +471,7 @@ write.table(round(sstats, digits=2),
 
 ## Density-dependent recruitment
 
-gamma01 <- as.matrix(jc2[,c("igamma0","gamma1")])[seq(1, 20000, by=10),]
+gamma01 <- as.matrix(jc4[,c("igamma0","gamma1")])[seq(1, 20000, by=10),]
 
 str(gamma01)
 
@@ -478,7 +484,8 @@ DDpost.low <- apply(DDpost, 1, quantile, prob=0.025)
 DDpost.upp <- apply(DDpost, 1, quantile, prob=0.975)
 
 
-png("../figs/fig-3_dd-recruitment.png", width=6, height=5, units="in", res=500)
+png("../figs/fig-3_dd-recruitment.png", width=6, height=5,
+    units="in", res=500)
 ##pdf("fig/fig-3_dd-recruitment.pdf", width=6, height=5)
 par(mai=c(0.8, 0.8, 0.1, 0.1))
 plot(sstats.0[paste("N[", 1:4, "]", sep=""),"Median"],
@@ -511,8 +518,6 @@ system("open ../figs/fig-3_dd-recruitment.png")
 
 
 ## Annual abundance and density estimates
-
-
 png("../figs/fig-5_abundance.png", width=8, height=6, units="in", res=400)
 par(mai=c(0.9, 0.9, 0.9, 0.9))
 yrs <- 2012:2016
