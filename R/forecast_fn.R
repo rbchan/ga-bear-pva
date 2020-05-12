@@ -7,6 +7,7 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
                      maxRecruit=Inf,   ## Maximum per-capita recruitment
                      NbarSims=1,       ## nSims to for each MCMC iteration
                                        ## to compute expected values of N
+                     storeZ=FALSE,     ## Store alive/dead state?
                      report=Inf) {
     nYears <- nFuture+1
     if(length(harvest)==1L & !stochastic) {
@@ -57,9 +58,11 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
         mu.lphi <- mcmat[,"mu.lphi"]
         sig.lphi <- mcmat[,"sig.lphi"]
     }
-    ## Could save a lot of memory by writing over z and a in each iter
-    z <- array(0L, c(M, nYears, nIter))
-    a <- array(1L, c(M, nYears, nIter))
+    if(storeZ) {
+        ## Could save a lot of memory by writing over z and a in each iter
+        z.out <- array(0L, c(M, nYears, nIter))
+        a.out <- array(1L, c(M, nYears, nIter))
+    }
     Nbar <- array(NA_integer_, c(nYears, NbarSims, nIter))
     reportit <- report>0
     badM <- rep(FALSE, nIter)
@@ -68,15 +71,22 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
             if(iter %% report == 0)
                 cat("  iter", iter, "of", nIter, "\n")
         }
-        z[1:Mout,1,iter] <- z.last[,iter]
-        a[1:Mout,1,iter] <- a.last[,iter]
+        if(storeZ) {
+            z.out[1:Mout,1,iter] <- z.last[,iter]
+            a.out[1:Mout,1,iter] <- a.last[,iter]
+        } else {
+            z <- matrix(0L, M, nYears)
+            a <- matrix(1L, M, nYears)
+            z[1:Mout,1] <- z.last[,iter]
+            a[1:Mout,1] <- a.last[,iter]
+        }
         ## The q loop is used to simulate trajectories of abundance
         ## for each posterior draw. Allows for Monte Carlo integration to
         ## compute expected values of quantities such as extinction risk
         ## For all variables other than Nbar, only last value in the q loop
         ## will be stored and returned
         for(q in 1:NbarSims) {
-        Nbar[1,q,iter] <- sum(z[,1,iter]) ##N[1,iter]
+        Nbar[1,q,iter] <- sum(z[,1]) ##N[1,iter]
         if(stochastic) {
             harvest <- rpois(nYears, meanHarvest)
         }
@@ -113,7 +123,7 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
             ## rate, but not on the number of females that contribute
             ## to recruitment 
             ER <- NafterHarvest*gamma[t-1,iter]
-            Avail <- sum(a[,t-1,iter])
+            Avail <- sum(a[,t-1])
             if(Avail<1) {
                 psi <- 1
             } else {
@@ -129,21 +139,26 @@ forecast <- function(mcout,            ## object of class mcmc or mcmc.list
             not.harvested <- rep(1, M)
             if(!is.null(harvest) && (Nbar[t-1,q,iter]>0) && (season=="postrepro")) {
                 harvested <- sample(M, min(harvest[t-1], Nbar[t-1,q,iter]),
-                                    prob=z[,t-1,iter]/Nbar[t-1,q,iter])
+                                    prob=z[,t-1]/Nbar[t-1,q,iter])
                 not.harvested[harvested] <- 0
             } else if(season=="prerepro") {
                 warning("This hasn't been implemented yet")
             }
-            Ez <- z[,t-1,iter]*phi[t-1,iter]*not.harvested +
-                a[,t-1,iter]*psi
-            z[,t,iter] <- rbinom(M, 1, Ez)
-            a[,t,iter] <- a[,t-1,iter]*(1-z[,t,iter])
-            Nbar[t,q,iter] <- sum(z[,t,iter]) ##N[t,iter]
+            Ez <- z[,t-1]*phi[t-1,iter]*not.harvested +
+                a[,t-1]*psi
+            z[,t] <- rbinom(M, 1, Ez)
+            a[,t] <- a[,t-1]*(1-z[,t])
+            Nbar[t,q,iter] <- sum(z[,t]) ##N[t,iter]
         }
+        }
+        if(storeZ) {
+            z.out[,,iter] <- z
         }
     }
 
-    return(list(z=z, ##N=N,
-                Nbar=Nbar,
-                gamma=gamma, phi=phi, badM=badM)) 
+    out <- list(Nbar=Nbar, gamma=gamma, phi=phi, badM=badM)
+
+    if(storeZ) out$z <- z.out
+
+    return(out) 
 }

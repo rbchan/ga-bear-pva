@@ -174,7 +174,7 @@ fyrs <- 2017:(2017+50)
 
 
 
-## Harvest rates (crude way of computing this)
+## Harvest rates 
 5/rowMeans(EN21.h5)
 10/rowMeans(EN21.h10)
 15/rowMeans(EN21.h15)
