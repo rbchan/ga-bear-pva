@@ -293,7 +293,7 @@ js3.out <- clusterEvalQ(cl1, {
 })
 
 
-save(js3.out, file="js3-out21.gzip")
+save(js3.out, file="js3.gzip")
 
 
 jc4.out <- clusterEvalQ(cl1, {
@@ -305,7 +305,7 @@ jc4.out <- clusterEvalQ(cl1, {
 
 
 
-save(jc4.out, file="jc4-out21.gzip")
+save(jc4.out, file="jc4.gzip")
 
 
 
@@ -321,7 +321,7 @@ js5.out <- clusterEvalQ(cl1, {
 })
 
 
-save(js5.out, file="js5-out21.gzip")
+save(js5.out, file="js5.gzip")
 
 
 
@@ -331,7 +331,7 @@ jm.out <- clusterEvalQ(cl1, {
 })
 
 
-save(jm.out, file="jm21.gzip")
+save(jm.out, file="jm.gzip")
 
 
 
