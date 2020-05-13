@@ -154,7 +154,7 @@ sum(S360dat$pixIn)*delta^2 / 1e6
 
 
 ## JAGS
-## Models can take several hours to run
+## Models are slow. About 450 iter/hr
 
 library(rjags)
 
@@ -205,13 +205,14 @@ ji <- function() {
     }
     p0i <- array(NA, c(nWeeks, nYears, 2))
     p0i[,,2] <- matrix(runif(nWeeks*nYears), nWeeks, nYears)
-    ## Could add list components '.RNG.name' and '.RNG.seed' to
-    ## make this reproducible. 
-    list(z=zi, s=si, s.rec=si.rec, p0=p0i,
-         sigma=runif(1, 3000, 4000), behave=runif(1),
-         mu.lphi=0, sig.lphi=.01,
-         psi=c(runif(1), rep(NA, nYears+nFuture-1)),
-         igamma0=runif(1, 0.2, 0.3), gamma1=runif(1, 0, 0.001))
+    out <- list(z=zi, s=si, s.rec=si.rec, p0=p0i,
+                sigma=runif(1, 3000, 4000), behave=runif(1, 0.5, 1),
+                mu.lphi=0, sig.lphi=.01,
+                psi=c(runif(1), rep(NA, nYears+nFuture-1)),
+                igamma0=runif(1, 0.2, 0.3), gamma1=runif(1, 0, 0.001))
+    out$".RNG.name" <- "base::Mersenne-Twister" 
+    out$".RNG.seed" <- sample.int(1e6, 1)
+    return(out)
 }
 
 str(ji())
@@ -226,7 +227,7 @@ rect(xlim[1], ylim[1], xlim[2], ylim[2], border="blue")
 
 
 #### Parameters to monitor
-jp <- c("p0", "sigma", "behave", "mu.lphi", "sig.lphi", 
+jp <- c("p0", "sigma", "behave", 
         "igamma0", "gamma0", "gamma1", "phi", "gamma", "EN", 
         "N", "Ntotal", "survivors", "recruits", "lambda")
 
@@ -237,21 +238,25 @@ library(parallel)
 
 (nCores <- max(1, min(detectCores()-1, 4)))
 
-cl1 <- makeCluster(4)
+cl1 <- makeCluster(nCores)
 
 clusterExport(cl1, c("jd", "ji", "jp",
                      "traps.in", "first.det", "last.det"))
 
-## Compile and adapt
-jm.out <- clusterEvalQ(cl1, {
-    library(rjags)
-    load.module("dic")
-    load.module("glm")
-    jm <- jags.model(file="dT-s0-rPDD2-phi0-pYB-sig0.jag",
-                     data=jd, inits=ji,
-                     n.chains=1, n.adapt=500)
-    return(jm)
-})
+## Compile and adapt. Comment out next line if you don't want reproducible results
+clusterSetRNGStream(cl1, iseed=389761)
+
+system.time({
+    jm.out <- clusterEvalQ(cl1, {
+        library(rjags)
+        load.module("dic")
+        load.module("glm")
+        jm <- jags.model(file="dT-s0-rPDD2-phi0-pYB-sig0.jag",
+                         data=jd, inits=ji,
+                         n.chains=1, n.adapt=500)
+        return(jm)
+    })
+}) ## Approx 1.5 hr
 
 
 save(jm.out, file="jm.gzip")
@@ -262,13 +267,17 @@ system.time({
     jc1.out <- clusterEvalQ(cl1, {
         jc1 <- coda.samples(model=jm,
                             variable.names=c(jp, "deviance"),
-                            n.iter=6500)
+                            n.iter=5000)
         return(as.mcmc(jc1))
     })
 }) ## 450 iterations/hr
 
 
 save(jc1.out, file="jc1.gzip")
+
+
+## mc1 <- as.mcmc.list(jc1.out)
+## plot(mc1, ask=TRUE)
 
 ## Draw some more samples, including the latent varialbes needed
 ## for forecasting
@@ -299,6 +308,9 @@ js3.out <- clusterEvalQ(cl1, {
 save(js3.out, file="js3.gzip")
 
 
+
+## These additional samples aren't really necessary because the Markov
+## chains usually converge very rapidly
 jc4.out <- clusterEvalQ(cl1, {
     jc4 <- coda.samples(model=jm,
                         variable.names=c(jp, "deviance", "z", "a","s"),
@@ -367,6 +379,10 @@ save(state.out, file="jm-state.gzip")
 
 
 ls()
+
+rm(list=ls())
+gc()
+
 
 library(coda)
 
