@@ -117,6 +117,7 @@ EX21.h25 <- apply(forc.h25$Nbar==0, c(1, 3), mean)
 
 matplot(EX21.h25[,1:100])
 
+## Posterior means and 95% CIs
 EX21.h0.mean <- rowMeans(EX21.h0)
 EX21.h0.low <- apply(EX21.h0, 1, quantile, prob=0.025)
 EX21.h0.upp <- apply(EX21.h0, 1, quantile, prob=0.975)

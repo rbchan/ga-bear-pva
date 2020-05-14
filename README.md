@@ -24,7 +24,7 @@ Data and code for Central Georgia black bear population viability analysis (PVA)
 
 #### [R/fit.R](R/forecast_fn.R)
 
-- Fit the model with the lowest WAIC score.
+- Fit the model with the lowest WAIC score. The complete set of models was run on the [UGA cluster](https://gacrc.uga.edu/systems/). That code is not included in this repository. 
 
 
 #### [R/forecast.R](R/forecast_fn.R)
@@ -34,7 +34,7 @@ Data and code for Central Georgia black bear population viability analysis (PVA)
 
 #### [R/forecast_fn.R](R/forecast_fn.R)
 
-- Function for forecasting population dynamics and computing posterior predictive distributions.
+- Function for forecasting population dynamics.
 
 
 #### [R/testS.R](R/testS.R)
@@ -48,6 +48,8 @@ Data and code for Central Georgia black bear population viability analysis (PVA)
 
 - The most supported model. 
 
+
+### [Figures](figs/)
 
 
 ## DOI
