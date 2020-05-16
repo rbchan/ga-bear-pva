@@ -150,7 +150,6 @@ str(S)
 plot(raster(S))
 
 sum(S)*delta^2 / 1e6 ## Area in km-sq
-sum(S360dat$pixIn)*delta^2 / 1e6
 
 
 ## JAGS
@@ -320,6 +319,8 @@ jc4.out <- clusterEvalQ(cl1, {
 
 
 
+
+
 save(jc4.out, file="jc4.gzip")
 
 
@@ -359,7 +360,7 @@ save(state.out, file="jm-state.gzip")
 
 
 
-
+stopCluster(cl1)
 
 
 
@@ -398,7 +399,7 @@ jc4 <- as.mcmc.list(jc4.out)
 
 
 
-vn <- varnames(jc1)
+vn <- varnames(jc4)
 
 vn.sub <- c(vn[-c(grep("p0", vn), grep("z\\[", vn),
                   grep("s\\[", vn), grep("a\\[", vn))],
@@ -412,12 +413,23 @@ vn.sub <- c(vn[-c(grep("p0", vn), grep("z\\[", vn),
 
 ##vn21sub <- vn21sub[-grep("deviance", vn21sub)]
 
-mc.sub <- as.data.frame(as.matrix(jc4[,vn.sub]))
+mc4 <- as.mcmc.list(jc4.out)[,vn.sub]
+## plot(mc4, ask=TRUE)
+
+
+gelman.diag(mc4[,1:34])
+gelman.diag(mc4[,35:44])
+
+effectiveSize(mc4)
+
+
+
+mc.sub <- as.data.frame(as.matrix(mc4))
 summary(mc.sub)
 
 ## Area of the state-space
-## sum(jdata15$S)*jdata15$delta^2/1e6
-SSarea <- 622.5984 ## sq-km
+## sum(jd$S)*jd$delta^2/1e6
+SSarea <- 622.5984 ## km^2
 
 
 
@@ -469,17 +481,13 @@ sstats
 write.table(format(sstats, digits=1, sci=FALSE),
             quote=FALSE, sep="\t")
 
-write.table(format(sstats, digits=1, sci=FALSE),
-            file="sstats21-2.txt",
-            quote=FALSE, sep="\t")
-
 
 write.table(round(sstats, digits=2),
             quote=FALSE, sep="\t")
 
-write.table(round(sstats, digits=2),
-            file="sstats21-2.txt",
-            quote=FALSE, sep="\t")
+## write.table(round(sstats, digits=2),
+##             file="sstats21-2.txt",
+##             quote=FALSE, sep="\t")
 
 
 
@@ -510,7 +518,6 @@ plot(sstats.0[paste("N[", 1:4, "]", sep=""),"Median"],
      ylim=c(0, 1), xaxs="i", yaxs="i",
      frame=FALSE, 
      xlab=expression(paste("Density (females / 100 ", km^2, ")")),
-##     xlab="Female abundance", 
      ylab=expression(paste(italic("Per capita"), " recruitment")))
 ##matlines(DDpost, type="l", col=gray(0.8))
 points(sstats.0[paste("N[", 1:4, "]", sep=""),"Median"],
@@ -524,7 +531,6 @@ lines(Nx, DDpost.mean)
 lines(Nx, DDpost.low, lty=2)
 lines(Nx, DDpost.upp, lty=2)
 Dx <- seq(0, 40, 10)
-##axis(1, at=seq(0, 200, 50), labels=round(seq(0, 200, 50)/SSarea*100, 1))
 axis(1, at=Dx*SSarea/100, labels=Dx)
 dev.off()
 system("open ../figs/fig-3_dd-recruitment.png")

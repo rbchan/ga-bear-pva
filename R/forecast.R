@@ -85,37 +85,28 @@ save(forc.h20, file="forc-h20.gzip")
 
 
 
-## 25 additional females per year
-system.time({
-    forc.h25 <- forecast(ps, nFuture=50, M=15000,
-                         harvest=25, stochastic=TRUE,
-                         NbarSims=100,
-                         report=100)
-})
-
-save(forc.h25, file="forc-h25.gzip")
 
 
 
-## Load saved results (if the forecasting above has already been completed)
-load("forc-h0.gzip")
-load("forc-h5.gzip")
-load("forc-h10.gzip")
-load("forc-h15.gzip")
-load("forc-h20.gzip")
-load("forc-h25.gzip")
+## ## Load saved results (if the forecasting above has already been completed)
+## load("forc-h0.gzip")
+## load("forc-h5.gzip")
+## load("forc-h10.gzip")
+## load("forc-h15.gzip")
+## load("forc-h20.gzip")
 
 
 
 ## Extinction risk curves for each posterior draw
+## These are samples from the posterior predictive distribution of
+## extinction risk at each future year
 EX21.h0 <- apply(forc.h0$Nbar==0, c(1, 3), mean)
 EX21.h5 <- apply(forc.h5$Nbar==0, c(1, 3), mean)
 EX21.h10 <- apply(forc.h10$Nbar==0, c(1, 3), mean)
 EX21.h15 <- apply(forc.h15$Nbar==0, c(1, 3), mean)
 EX21.h20 <- apply(forc.h20$Nbar==0, c(1, 3), mean)
-EX21.h25 <- apply(forc.h25$Nbar==0, c(1, 3), mean)
 
-matplot(EX21.h25[,1:100])
+matplot(EX21.h15[,1:100])
 
 ## Posterior means and 95% CIs
 EX21.h0.mean <- rowMeans(EX21.h0)
@@ -138,13 +129,10 @@ EX21.h20.mean <- rowMeans(EX21.h20)
 EX21.h20.low <- apply(EX21.h20, 1, quantile, prob=0.025)
 EX21.h20.upp <- apply(EX21.h20, 1, quantile, prob=0.975)
 
-EX21.h25.mean <- rowMeans(EX21.h25)
-EX21.h25.low <- apply(EX21.h25, 1, quantile, prob=0.025)
-EX21.h25.upp <- apply(EX21.h25, 1, quantile, prob=0.975)
 
 
-plot(EX.h25.mean, ylim=0:1)
-lines(EX.h25.upp)
+plot(EX21.h10.mean, ylim=0:1, type="l")
+lines(EX21.h10.upp, col=gray(0.8))
 
 
 
@@ -156,11 +144,10 @@ EN21.h5 <- apply(forc.h5$Nbar, c(1, 3), median)
 EN21.h10 <- apply(forc.h10$Nbar, c(1, 3), median)
 EN21.h15 <- apply(forc.h15$Nbar, c(1, 3), median)
 EN21.h20 <- apply(forc.h20$Nbar, c(1, 3), median)
-EN21.h25 <- apply(forc.h25$Nbar, c(1, 3), median)
 
 matplot(EN21.h0, type="l")
-matplot(EN21.h15, type="l")
-matplot(EN21.h25, type="l")
+
+matplot(EN21.h20, type="l")
 
 
 
@@ -184,7 +171,7 @@ quantile(EN21.h20[51,], c(0.025, 0.5, 0.975))
 ## Years
 fyrs <- 2017:(2017+50)
 iyrs <- 1:51 ## Reduce the length of this sequence to shorten the
-             ## timehorizon in the figure
+             ## time horizon in the figure
 
 ## Colors
 pclr <- rgb(0,0,1,0.6)
