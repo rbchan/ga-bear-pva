@@ -49,7 +49,15 @@ Data and code for Central Georgia black bear population viability analysis (PVA)
 - The most supported model. 
 
 
-### [Figures](figs/)
+### Figures
+
+#### [figs/](figs/)
+
+### Supporting information
+
+#### [supporting_information.tex](supporting_information.tex)
+
+- TeX file with supporting information accompanying the paper.
 
 
 ## DOI
