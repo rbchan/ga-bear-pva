@@ -2,8 +2,8 @@
 Data and code for Central Georgia black bear population viability analysis (PVA). The PVA involved forecasting with a female-based population model fit to spatial capture-recapture data. 
 
 Hooker, M.J., R.B. Chandler, B.T. Bond, and M.J. Chamberlain. In
-press. Assessing population viability of black bears using spatial
-capture-recapture models. Journal of Wildlife Management. [link](https://wildlife.onlinelibrary.wiley.com/doi/abs/10.1002/jwmg.21887)
+press. [Assessing population viability of black bears using spatial
+capture-recapture models](https://wildlife.onlinelibrary.wiley.com/doi/abs/10.1002/jwmg.21887). Journal of Wildlife Management. 
 
 
 
