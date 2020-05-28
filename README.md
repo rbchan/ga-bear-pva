@@ -27,14 +27,18 @@ capture-recapture models](https://wildlife.onlinelibrary.wiley.com/doi/abs/10.10
 - Compute summary statistics and create maps of the detection locations, referenced by year, for each bear.
 
 
-#### [R/fit.R](R/forecast_fn.R)
+#### [R/fit.R](R/fit.R)
 
 - Fit the model with the lowest WAIC score. The other models were run on the [UGA cluster](https://gacrc.uga.edu/systems/). That code is not included here. 
 
+- *Warning* It takes about a day to run this script.
 
-#### [R/forecast.R](R/forecast_fn.R)
+
+#### [R/forecast.R](R/forecast.R)
 
 - Forecast with the fitted model. Depends on the `forecast` function in [R/forecast_fn.R](R/forecast_fn.R)
+
+- *Warning* It takes about a day to run this script.
 
 
 #### [R/forecast_fn.R](R/forecast_fn.R)
