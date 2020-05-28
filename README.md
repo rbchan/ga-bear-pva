@@ -1,5 +1,10 @@
 # ga-bear-pva
-Data and code for Central Georgia black bear population viability analysis (PVA). The PVA involved forecasting with a female-based population model fit to spatial capture-recapture data.
+Data and code for Central Georgia black bear population viability analysis (PVA). The PVA involved forecasting with a female-based population model fit to spatial capture-recapture data. 
+
+Hooker, M.J., R.B. Chandler, B.T. Bond, and M.J. Chamberlain. In
+press. Assessing population viability of black bears using spatial
+capture-recapture models. Journal of Wildlife Management. [link](https://wildlife.onlinelibrary.wiley.com/doi/abs/10.1002/jwmg.21887)
+
 
 
 ## File descriptions
@@ -24,7 +29,7 @@ Data and code for Central Georgia black bear population viability analysis (PVA)
 
 #### [R/fit.R](R/forecast_fn.R)
 
-- Fit the model with the lowest WAIC score. The complete set of models was run on the [UGA cluster](https://gacrc.uga.edu/systems/). That code is not included in this repository. 
+- Fit the model with the lowest WAIC score. The other models were run on the [UGA cluster](https://gacrc.uga.edu/systems/). That code is not included here. 
 
 
 #### [R/forecast.R](R/forecast_fn.R)
